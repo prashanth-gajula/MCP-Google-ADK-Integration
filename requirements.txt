@@ -1,0 +1,10 @@
+fastmcp
+google-auth
+google-auth-oauthlib
+google-api-python-client
+google-adk[database]==0.3.0
+yfinance==0.2.56
+psutil==5.9.5
+litellm==1.66.3
+python-dotenv==1.1.0
+gcloud
