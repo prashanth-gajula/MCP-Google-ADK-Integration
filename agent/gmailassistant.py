@@ -34,7 +34,7 @@ async def main(query):
         root_agent = LlmAgent(
             name="gmailassistant",
             description="This is my first agent",
-            instruction="You are a helpful assistant.",
+            instruction="You are a helpful assistant when user ask about any email try to get the full email content along with the subject by accessing it.",
             model="gemini-2.0-flash",
             tools=tool_set
         )
@@ -56,7 +56,7 @@ async def main(query):
 
         # 6. Print the response
         async for event in events:
-            print(event)
+            #print(event)
             if event.is_final_response():
                 final_response = event.content.parts[0].text
                 print("Agent Response:", final_response)
@@ -78,4 +78,4 @@ async def main(query):
 
 
 if __name__ == "__main__":
-    asyncio.run(main("can you check and tell me if i have received any emails about job listings in last one hour"))
+    asyncio.run(main("can you summarize latest email from Satwan Sah?"))

@@ -1,4 +1,8 @@
 from auth.auth import get_gmail_service
+import email
+import base64
+from utils.util import strip_html_tags
+
 
 
 #Tools
@@ -16,7 +20,7 @@ def read_latest_email() -> dict:
 
     # 1) Get the most recent message ID
     result = service.users().messages().list(
-        userId="me", maxResults=20, q=""
+        userId="me", maxResults=20, q="in:inbox -label:sent"
     ).execute()
 
     messages = result.get("messages", [])
@@ -41,17 +45,24 @@ def read_latest_email() -> dict:
     body = ""
     payload = msg.get("payload", {})
     if "body" in payload and payload["body"].get("data"):
-        import base64
         body = base64.urlsafe_b64decode(payload["body"]["data"]).decode("utf-8", errors="ignore")
     else:
-        # If email is multipart, traverse parts
-        parts = payload.get("parts", [])
-        for part in parts:
-            if part.get("mimeType") == "text/plain" and "data" in part["body"]:
-                import base64
-                body += base64.urlsafe_b64decode(
-                    part["body"]["data"]
-                ).decode("utf-8", errors="ignore")
+        raw_msg = service.users().messages().get(
+            userId="me",
+            id=msg["id"],
+            format="raw"
+        ).execute()
+        raw_email = base64.urlsafe_b64decode(raw_msg["raw"])
+    email_message = email.message_from_bytes(raw_email)
+    if email_message.is_multipart():
+        for part in email_message.walk():
+            if part.get_content_type() == "text/plain":
+                body = part.get_payload(decode=True).decode("utf-8", errors="ignore")
+            elif part.get_content_type() == "text/html":
+                html_body = part.get_payload(decode=True).decode("utf-8", errors="ignore")
+                body =  strip_html_tags(html_body)
+    else:
+        body = email_message.get_payload(decode=True).decode("utf-8", errors="ignore")
 
     return {
         "subject": subject,
