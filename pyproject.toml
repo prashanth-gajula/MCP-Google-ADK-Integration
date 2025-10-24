@@ -15,6 +15,7 @@ dependencies = [
     "ir>=0.0.6",
     "litellm==1.66.3",
     "psutil==5.9.5",
+    "pypdf2",
     "python-dotenv==1.1.0",
     "stdioconnectionparams",
     "yfinance==0.2.56",

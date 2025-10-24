@@ -4,6 +4,8 @@ from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset, StdioServerParamet
 from google.adk.sessions import InMemorySessionService
 from google.adk.runners import Runner
 from google.genai import types
+import warnings
+warnings.filterwarnings("ignore")
 
 from dotenv import load_dotenv
 
@@ -13,7 +15,7 @@ APP_NAME = "basic_agent_no_web"
 USER_ID = "user_12345"
 SESSION_ID = "session_12345"
 
-async def main(query):
+async def main():
     toolset = None
     try:
         # create memory session 
@@ -32,34 +34,40 @@ async def main(query):
 
         # 2. Create agent
         root_agent = LlmAgent(
-            name="gmailassistant",
-            description="This is my first agent",
-            instruction="You are a helpful assistant when user ask about any email try to get the full email content along with the subject by accessing it.",
-            model="gemini-2.0-flash",
-            tools=tool_set
-        )
+    name="gmailassistant",
+    description="Assistant that can read Gmail and Google Drive files",
+    instruction="""You are a helpful assistant with access to Gmail and Google Drive.
+
+    When a user asks to read a file from Google Drive:
+    1. If they provide a file_id directly, use read_drive_file(file_id="...")
+    2. If they mention a file name, first use list_drive_files() to find the file ID
+    3. Then use read_drive_file(file_id="...") with the found ID
+
+    Always extract and use the exact file_id from the list_drive_files response.
+    """,
+    model="gemini-2.0-flash-exp",
+    tools=tool_set
+)
 
         # 3. Create runner instance
         runner = Runner(app_name=APP_NAME, agent=root_agent, session_service=session_service)
 
-        # 4. Format the query 
-        content = types.Content(role="user", parts=[types.Part(text=query)])
+        while True:
+            user_input = input("You: ").strip()
+            if user_input.lower() in ["exit", "quit"]:
+                break
 
-        print("Running agent with query:", query)
-        
-        # 5. Run the agent 
-        events = runner.run_async(
-            new_message=content,
-            user_id=USER_ID,
-            session_id=SESSION_ID,
-        )
+            content = types.Content(role="user", parts=[types.Part(text=user_input)])
 
-        # 6. Print the response
-        async for event in events:
-            #print(event)
-            if event.is_final_response():
-                final_response = event.content.parts[0].text
-                print("Agent Response:", final_response)
+            events = runner.run_async(
+                new_message=content,
+                user_id=USER_ID,
+                session_id=SESSION_ID,
+            )
+
+            async for event in events:
+                if event.is_final_response():
+                    print("Agent:", event.content.parts[0].text)
 
     finally:
         # ✅ Cleanly close MCP server connection
@@ -78,4 +86,4 @@ async def main(query):
 
 
 if __name__ == "__main__":
-    asyncio.run(main("can you summarize latest email from Satwan Sah?"))
+    asyncio.run(main())

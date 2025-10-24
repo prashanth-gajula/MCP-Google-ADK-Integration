@@ -2,6 +2,9 @@ from auth.auth import get_gmail_service
 import email
 import base64
 from utils.util import strip_html_tags
+from email.mime.text import MIMEText
+from base64 import urlsafe_b64encode
+from googleapiclient.errors import HttpError
 
 
 
@@ -69,3 +72,34 @@ def read_latest_email() -> dict:
         "from": sender,
         "body": body or "(No body text)"
     }
+    
+#send email
+def send_email(to: str, subject: str, body: str) -> dict:
+    """
+    Send an email using the Gmail API.
+    """
+    try:
+        service = get_gmail_service()
+
+        # Build MIME message
+        message = MIMEText(body)
+        message['to'] = to
+        message['subject'] = subject
+
+        # Encode message for Gmail
+        raw = urlsafe_b64encode(message.as_bytes()).decode()
+
+        sent = service.users().messages().send(
+            userId="me",
+            body={"raw": raw}
+        ).execute()
+
+        return {
+            "status": "success",
+            "message_id": sent["id"],
+            "to": to,
+            "subject": subject
+        }
+
+    except HttpError as error:
+        return {"status": "error", "error": str(error)}
