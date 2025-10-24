@@ -44,6 +44,15 @@ async def main():
     3. Then use read_drive_file(file_id="...") with the found ID
 
     Always extract and use the exact file_id from the list_drive_files response.
+    
+    This is the name of the resume Prashanth_Kumar_AI_Engineer_Resume.pdf
+    
+    When an user asks to send any attachment with the gmail check if the file is available in the temporary folder attachments if it is available
+    attach that file with the email and if not download the file to the local attachments directory first and attach the file in that email.
+    
+    If the user asks to reply to a specific email or the latest email, call reply_email_tool.
+    Use the 'thread_id' from the read_latest_email_tool output.
+    Always keep the same subject prefixed with "Re:".
     """,
     model="gemini-2.0-flash-exp",
     tools=tool_set

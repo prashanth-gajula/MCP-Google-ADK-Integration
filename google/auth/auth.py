@@ -11,9 +11,11 @@ from googleapiclient.discovery import build
 
 # Minimal, safe scope to start. We can expand later.
 SCOPES = [
-    "https://www.googleapis.com/auth/gmail.readonly",      # Gmail
-    "https://www.googleapis.com/auth/drive.readonly",      # Drive
-    "https://www.googleapis.com/auth/calendar.readonly"    # Calendar
+    "https://www.googleapis.com/auth/gmail.readonly",     
+    "https://www.googleapis.com/auth/drive.readonly",     
+    "https://www.googleapis.com/auth/calendar.readonly",
+    "https://www.googleapis.com/auth/gmail.modify",
+    "https://www.googleapis.com/auth/gmail.send"
 ]#read only scope was provided
 
 # Paths: keep the token next to credentials.json

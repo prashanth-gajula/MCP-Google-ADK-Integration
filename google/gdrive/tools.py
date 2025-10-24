@@ -1,7 +1,10 @@
 from auth.auth import get_drive_service
 from io import BytesIO
 from PyPDF2 import PdfReader
-
+from googleapiclient.http import MediaIoBaseDownload
+import io
+import os
+import base64
 
 def list_drive_files() -> list[dict]:
     """
@@ -93,4 +96,52 @@ def read_drive_file(file_id: str) -> dict:
         "name": name,
         "type": mime_type,
         "content": "(Binary file cannot be previewed)"
+    }
+    
+
+#download file content
+ATTACHMENTS_DIR = "attachments"
+
+def download_drive_file(file_id: str, filename: str) -> dict:
+    """
+    Download a Google Drive file locally if not already cached.
+
+    Args:
+        file_id (str): Google Drive file ID to download.
+        filename (str): Desired local filename.
+
+    Returns:
+        dict: {
+            "file_id": str,
+            "path": str,  # local path to the file
+            "cached": bool
+        }
+    """
+    # Ensure attachments directory exists
+    os.makedirs(ATTACHMENTS_DIR, exist_ok=True)
+
+    file_path = os.path.join(ATTACHMENTS_DIR, filename)
+
+    # ✅ Check if file already downloaded locally
+    if os.path.exists(file_path):
+        return {
+            "file_id": file_id,
+            "path": file_path,
+            "cached": True
+        }
+
+    # ✅ Download from Drive (first time)
+    service = get_drive_service()
+    request = service.files().get_media(fileId=file_id)
+    fh = io.FileIO(file_path, "wb")
+    downloader = MediaIoBaseDownload(fh, request)
+
+    done = False
+    while done is False:
+        status, done = downloader.next_chunk()
+
+    return {
+        "file_id": file_id,
+        "path": file_path,
+        "cached": False
     }
