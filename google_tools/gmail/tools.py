@@ -1,4 +1,4 @@
-from auth.auth import get_gmail_service
+from auth.auth import get_gmail_service,get_credentials
 import email
 import base64
 from utils.util import strip_html_tags
@@ -11,8 +11,10 @@ from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from base64 import urlsafe_b64encode
 import os
+from googleapiclient.discovery import build
+from dotenv import load_dotenv
 
-
+load_dotenv(dotenv_path="agent/.env")
 
 #Tools
 def list_labels() -> list[str]:
@@ -220,4 +222,31 @@ def reply_to_email(thread_id: str,in_reply_to: str,to: str,subject: str,body: st
 
     except HttpError as error:
         return {"status": "error", "error": str(error)}
+    
+#notify email code
+
+
+def register_gmail_watch():
+    """
+    Register Gmail watch to receive push notifications when new emails arrive.
+    This creates a channel from Gmail → Pub/Sub topic.
+    """
+    creds = get_credentials()
+    service = build('gmail', 'v1', credentials=creds)
+
+    request_body = {
+        "labelIds": ["INBOX"],
+        "topicName": os.getenv("PUBSUB_TOPIC_NAME")
+    }
+
+    response = service.users().watch(
+        userId='me',
+        body=request_body
+    ).execute()
+
+    print("✅ Gmail watch successfully registered!")
+    print(f"Expiration: {response.get('expiration')}")
+    print(f"History ID: {response.get('historyId')}")
+    return response
+
 
